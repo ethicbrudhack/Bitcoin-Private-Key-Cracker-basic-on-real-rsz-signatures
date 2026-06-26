@@ -1,6 +1,8 @@
 DONATE: bc1qps62cyk9f9unmdkc9k3ccj9e2h8ywfhg2j53ec
 
 Built with ❤️ for the crypto research community.
+
+video: https://www.youtube.com/watch?v=1cVfrP3Y2Qo
 # ECDSA Private Key Finder for secp256k1
 
 ## 1. Main Goal

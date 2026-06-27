@@ -1,4 +1,5 @@
 # 🔐 ECDSA Nonce Attack Suite - 3 Signature Recovery
+<img width="1446" height="626" alt="image" src="https://github.com/user-attachments/assets/e0d93099-3bc8-407e-8c3c-71e90894a771" />
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++](https://img.shields.io/badge/C++-11-blue.svg)](https://isocpp.org/)
@@ -287,7 +288,6 @@ Twoje k1 = 0x12345
    (to około 44466652965357681660706993772162769907544647152472412715774099096338432.00 milionów)
 
 ✅ Dane zapisano do pliku: test_signatures.txt
-<img width="1544" height="673" alt="image" src="https://github.com/user-attachments/assets/0c515dda-44a6-48c6-ba94-0dddfea6956c" />
 
 
 

@@ -1,106 +1,116 @@
-🔐 ECDSA Nonce Attack Suite - 3 Signature Recovery
-https://img.shields.io/badge/License-MIT-yellow.svg
-https://img.shields.io/badge/C++-11-blue.svg
-https://img.shields.io/badge/OpenSSL-3.0-green.svg
+# 🔐 ECDSA Nonce Attack Suite - 3 Signature Recovery
 
-📝 Description
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![C++](https://img.shields.io/badge/C++-11-blue.svg)](https://isocpp.org/)
+[![OpenSSL](https://img.shields.io/badge/OpenSSL-3.0-green.svg)](https://www.openssl.org/)
+
+## 📝 Description
+
 A comprehensive ECDSA private key recovery tool that exploits vulnerabilities in nonce (k) generation. The program implements three distinct attack methods to recover the private key from the secp256k1 curve using three ECDSA signatures.
 
-🎯 Goal
+## 🎯 Goal
+
 Recover the private key (d) from the secp256k1 curve using three ECDSA signatures that potentially have weak, predictable, or related nonces (k values).
 
-🔬 Methodology
-Mathematical Foundation
+## 🔬 Methodology
+
+### Mathematical Foundation
+
 For ECDSA signatures we have the following system of equations:
+s1 = (z1 + r1d) / k1 (mod n)
+s2 = (z2 + r2d) / k2 (mod n)
+s3 = (z3 + r3*d) / k3 (mod n)
 
-text
-s1 = (z1 + r1*d) / k1  (mod n)
-s2 = (z2 + r2*d) / k2  (mod n)
-s3 = (z3 + r3*d) / k3  (mod n)
 Where:
+- `s` - signature component
+- `z` - message hash (transaction hash)
+- `r` - signature component (x-coordinate of k*G point)
+- `d` - private key (target)
+- `k` - nonce (ephemeral key, must be random)
+- `n` - curve order (secp256k1)
 
-s - signature component
+## ⚡ Three Attack Methods
 
-z - message hash (transaction hash)
+### Method 1: Direct Formula (k₂ = k₁ + Δ)
 
-r - signature component (x-coordinate of k*G point)
+This method searches for a linear relationship between nonces: `k₂ = k₁ + Δ`.
 
-d - private key (target)
+**Mathematical Derivation:**
 
-k - nonce (ephemeral key, must be random)
+When `k₂ = k₁ + Δ`, we can derive:
 
-n - curve order (secp256k1)
+Where:
+- `s` - signature component
+- `z` - message hash (transaction hash)
+- `r` - signature component (x-coordinate of k*G point)
+- `d` - private key (target)
+- `k` - nonce (ephemeral key, must be random)
+- `n` - curve order (secp256k1)
 
-⚡ Three Attack Methods
-Method 1: Direct Formula (k₂ = k₁ + Δ)
-This method searches for a linear relationship between nonces: k₂ = k₁ + Δ.
+## ⚡ Three Attack Methods
 
-Mathematical Derivation:
+### Method 1: Direct Formula (k₂ = k₁ + Δ)
 
-When k₂ = k₁ + Δ, we can derive:
+This method searches for a linear relationship between nonces: `k₂ = k₁ + Δ`.
+
+**Mathematical Derivation:**
+
+When `k₂ = k₁ + Δ`, we can derive:
+d = (s₂z₁ - s₁z₂ + Δs₁s₂) / (s₁r₂ - s₂r₁) (mod n)
 
 text
-d = (s₂*z₁ - s₁*z₂ + Δ*s₁*s₂) / (s₁*r₂ - s₂*r₁)  (mod n)
+
 The algorithm:
+1. Iterates Δ from 0 to max_delta (default: 10,000,000)
+2. For each Δ, calculates `d` using the formula
+3. Verifies all three signatures match
+4. Checks if `k₂ = k₁ + Δ` holds
+5. Validates the public key
 
-Iterates Δ from 0 to max_delta (default: 10,000,000)
+**⚠️ Important:** This method requires **UNNORMALIZED** `s` values (low-s normalization breaks the formula).
 
-For each Δ, calculates d using the formula
+**Use Case:** When nonces are generated with a known linear relationship (e.g., counter-based RNG).
 
-Verifies all three signatures match
+### Method 2: Brute Force (k₁ from 1 upwards)
 
-Checks if k₂ = k₁ + Δ holds
+This method searches for `k₁` by brute force, starting from 1.
 
-Validates the public key
+**Algorithm:**
+1. For each `k₁` from 1 to max_attempts:
+   - Calculates `k₂` and `k₃` from the system of equations
+   - Verifies all three signatures match
+   - Checks the public key
+2. Stops when the correct private key is found
 
-⚠️ Important: This method requires UNNORMALIZED s values (low-s normalization breaks the formula).
+**Use Case:** When `k₁` is small (weak RNG, low entropy, or buggy implementation).
 
-Use Case: When nonces are generated with a known linear relationship (e.g., counter-based RNG).
+### Method 3: Random Search (Random k₁)
 
-Method 2: Brute Force (k₁ from 1 upwards)
-This method searches for k₁ by brute force, starting from 1.
+This method generates random `k₁` values and tests them.
 
-Algorithm:
+**Algorithm:**
+1. Generates random 64-bit `k₁` values
+2. For each random `k₁`:
+   - Calculates `k₂` and `k₃` from the system
+   - Verifies all three signatures match
+   - Checks the public key
+3. Stops when the correct private key is found
 
-For each k₁ from 1 to max_attempts:
+**Use Case:** When `k₁` is large but you want to try random guesses (similar to lottery).
 
-Calculates k₂ and k₃ from the system of equations
+## 📊 Performance
 
-Verifies all three signatures match
+| Method | Speed | Success Condition |
+|--------|-------|-------------------|
+| Method 1 | < 1 second | Known linear relationship `k₂ = k₁ + Δ` |
+| Method 2 | ~4000 k₁/s | Small `k₁` (< 1,000,000) |
+| Method 3 | ~4000 attempts/s | Lucky random guess |
 
-Checks the public key
+## 🚀 Installation & Usage
 
-Stops when the correct private key is found
+### Requirements
 
-Use Case: When k₁ is small (weak RNG, low entropy, or buggy implementation).
-
-Method 3: Random Search (Random k₁)
-This method generates random k₁ values and tests them.
-
-Algorithm:
-
-Generates random 64-bit k₁ values
-
-For each random k₁:
-
-Calculates k₂ and k₃ from the system
-
-Verifies all three signatures match
-
-Checks the public key
-
-Stops when the correct private key is found
-
-Use Case: When k₁ is large but you want to try random guesses (similar to lottery).
-
-📊 Performance
-Method	Speed	Success Condition
-Method 1	< 1 second	Known linear relationship k₂ = k₁ + Δ
-Method 2	~4000 k₁/s	Small k₁ (< 1,000,000)
-Method 3	~4000 attempts/s	Lucky random guess
-🚀 Installation & Usage
-Requirements
-bash
+```bash
 # Ubuntu/Debian
 sudo apt-get update
 sudo apt-get install libssl-dev build-essential
@@ -242,22 +252,6 @@ MIT License - for educational use only
 
 ⚠️ WARNING
 This program is for educational purposes only. Do not use it to attack real systems or steal cryptocurrencies. Understanding these vulnerabilities is crucial for building more secure systems.
-
-🧪 Generator Script
-Use the included Python script to generate test cases:
-
-python
-python3 generate_test.py
-This creates test data with:
-
-Known linear relationships (for Method 1)
-
-Small nonces (for Method 2)
-
-Various test scenarios
-
-Made for educational purposes. Use responsibly. 🔐
-
 python
 python3 generate_test.py
 This will create:
